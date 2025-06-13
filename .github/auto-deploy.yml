@@ -1,0 +1,49 @@
+name: Auto Deploy on Trigger
+
+on:
+  repository_dispatch:
+    types: [trigger-deploy]
+  
+  # Optional: Allow manual trigger from GitHub UI
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Deployment message'
+        required: false
+        default: 'Manual deployment from GitHub Actions'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: 🔧 Make deploy script executable
+        run: chmod +x ./deploy.sh
+        
+      - name: 🚀 Run deployment with custom message
+        run: |
+          # Get message from repository dispatch payload or workflow input
+          MESSAGE="${{ github.event.client_payload.message || github.event.inputs.message || 'Automated deployment via API trigger' }}"
+          ./deploy.sh -m "$MESSAGE"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
+          
+      - name: 📋 Deployment Summary
+        run: |
+          MESSAGE="${{ github.event.client_payload.message || github.event.inputs.message || 'Automated deployment via API trigger' }}"
+          echo "### 🎉 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Message:** $MESSAGE" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project:** ${{ secrets.PROJECT_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
