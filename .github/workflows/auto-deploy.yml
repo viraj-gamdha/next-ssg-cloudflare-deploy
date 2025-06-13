@@ -1,13 +1,15 @@
 name: Auto Deploy on Trigger
 
 on:
+  # Triggered by your Hono API
   repository_dispatch:
     types: [trigger-deploy]
   
+  # Allows manual triggering from the GitHub Actions UI
   workflow_dispatch:
     inputs:
       message:
-        description: 'Deployment message'
+        description: 'Manual deployment message'
         required: false
         default: 'Manual deployment from GitHub Actions'
 
@@ -15,34 +17,44 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     
+    # Define environment variables for the entire job
+    env:
+      # This logic correctly selects the message from the API trigger, manual trigger, or a default.
+      DEPLOY_MESSAGE: ${{ github.event.client_payload.message || github.event.inputs.message || 'Automated deployment via API' }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
+
     steps:
-      - name: 📥 Checkout code
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
-        
+      
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20' # Using version 20 as specified
           cache: 'npm'
+      
+      - name: 📝 Log Deployment Message
+        run: echo "📝 Deployment message: ${{ env.DEPLOY_MESSAGE }}"
           
-      - name: 🔧 Make deploy script executable
-        run: chmod +x ./deploy.sh
-        
-      - name: 🚀 Run deployment with custom message
+      - name: 📦 Install Dependencies
+        run: npm install
+      
+      - name: 🔨 Build Project
+        run: npm run build
+      
+      - name: 🚀 Deploy to Cloudflare Pages
         run: |
-          # Get message from repository dispatch payload or workflow input
-          MESSAGE="${{ github.event.client_payload.message || github.event.inputs.message || 'Automated deployment via API trigger' }}"
-          ./deploy.sh -m "$MESSAGE"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          PROJECT_NAME: ${{ secrets.PROJECT_NAME }}
-          
-      - name: 📋 Deployment Summary
+          npx wrangler pages deploy out \
+            --project-name="${{ env.PROJECT_NAME }}" \
+            --branch="main" \
+            --commit-message="${{ env.DEPLOY_MESSAGE }}"
+      
+      - name: 🎉 Final Summary
         run: |
-          MESSAGE="${{ github.event.client_payload.message || github.event.inputs.message || 'Automated deployment via API trigger' }}"
-          echo "### 🎉 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Deployment Complete!" >> $GITHUB_STEP_SUMMARY
           echo "- **Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Message:** $MESSAGE" >> $GITHUB_STEP_SUMMARY
-          echo "- **Time:** $(date)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Project:** ${{ secrets.PROJECT_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project:** ${{ env.PROJECT_NAME }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Message:** ${{ env.DEPLOY_MESSAGE }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date)" >> $GITHUB_STEP_SUMMARY
