@@ -35,7 +35,7 @@ jobs:
           cache: 'npm'
       
       - name: 📝 Log Deployment Message
-        run: echo "📝 Deployment message: ${{ env.DEPLOY_MESSAGE }}"
+        run: echo "📝 Deployment message - ${{ env.DEPLOY_MESSAGE }}"
           
       - name: 📦 Install Dependencies
         run: npm install
