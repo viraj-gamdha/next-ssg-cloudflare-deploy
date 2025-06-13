@@ -4,7 +4,6 @@ on:
   repository_dispatch:
     types: [trigger-deploy]
   
-  # Optional: Allow manual trigger from GitHub UI
   workflow_dispatch:
     inputs:
       message:
