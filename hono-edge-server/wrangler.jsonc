@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hono-static-edge-server",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-06-13",
+  "compatibility_flags": ["nodejs_compat"],
+  // "vars": {},
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "static-site-db",
+      "database_id": "6a762238-5668-4fd4-8e76-88b45f82ed2c",
+      "migrations_dir": "./drizzle/migrations"
+    }
+  ]
+}

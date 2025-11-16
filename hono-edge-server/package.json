@@ -1,0 +1,24 @@
+{
+  "name": "hono-edge-server",
+  "scripts": {
+    "dev": "wrangler dev --local",
+    "build": "wrangler build",
+    "deploy": "wrangler deploy --minify",
+    "db:studio": "drizzle-kit studio",
+    "db:studio:local": "drizzle-kit studio --config=drizzle.config.local.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply task-tracker --local",
+    "db:migrate": "drizzle-kit migrate",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.2",
+    "hono": "^4.7.11"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.1",
+    "better-sqlite3": "^11.10.0",
+    "drizzle-kit": "^0.31.1",
+    "wrangler": "^4.4.0"
+  }
+}
